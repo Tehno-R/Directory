@@ -1,0 +1,58 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UseWPF>true</UseWPF>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Update="MyStructures\Red-Black_Tree.cs">
+        <Link>Red-Black_Tree\Red-Black_Tree.cs</Link>
+      </Compile>
+      <Compile Remove="MyStructures\**" />
+      <Compile Remove="HashTable\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="MyStructures\**" />
+      <EmbeddedResource Remove="HashTable\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Page Remove="MyStructures\**" />
+      <Page Remove="HashTable\**" />
+      <Page Update="AlterView.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <XamlRuntime>Wpf</XamlRuntime>
+        <SubType>Designer</SubType>
+      </Page>
+      <Page Update="Debug.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <XamlRuntime>Wpf</XamlRuntime>
+        <SubType>Designer</SubType>
+      </Page>
+      <Page Update="GetHashTableSize.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <XamlRuntime>Wpf</XamlRuntime>
+        <SubType>Designer</SubType>
+      </Page>
+      <Page Update="SearchResult.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <XamlRuntime>Wpf</XamlRuntime>
+        <SubType>Designer</SubType>
+      </Page>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="MyStructures\**" />
+      <None Remove="HashTable\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="MyStructures\MyStructures.csproj" />
+    </ItemGroup>
+
+</Project>

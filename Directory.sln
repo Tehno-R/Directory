@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wpfApp", "wpfApp.csproj", "{FD76B84C-47A6-4E1D-936A-FF03257BD409}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyStructures", "MyStructures\MyStructures.csproj", "{B5A87CE4-9445-48CA-82D4-DC12A1571E7F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FD76B84C-47A6-4E1D-936A-FF03257BD409}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD76B84C-47A6-4E1D-936A-FF03257BD409}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD76B84C-47A6-4E1D-936A-FF03257BD409}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD76B84C-47A6-4E1D-936A-FF03257BD409}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5A87CE4-9445-48CA-82D4-DC12A1571E7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5A87CE4-9445-48CA-82D4-DC12A1571E7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5A87CE4-9445-48CA-82D4-DC12A1571E7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5A87CE4-9445-48CA-82D4-DC12A1571E7F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

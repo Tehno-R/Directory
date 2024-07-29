@@ -1,0 +1,19 @@
+﻿<Window x:Class="wpfApp.SearchRes"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Result Of Search" Height="500" Width="600"
+        ResizeMode="NoResize" SizeToContent="Manual">
+    <Grid>
+        <ListView Grid.Row="0" Grid.Column="0" Name="SearchResList" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10">
+            <ListView.View >
+                <GridView>
+                    <GridViewColumn Header="Паспорт" DisplayMemberBinding="{Binding Passport}" Width="80
+                    "/>
+                    <GridViewColumn Header="Фамилия" DisplayMemberBinding="{Binding Fio}" Width="300"/>
+                    <GridViewColumn Header="ГосНомер" DisplayMemberBinding="{Binding LicensePlate}" Width="80"/>
+                    <GridViewColumn Header="Дата" DisplayMemberBinding="{Binding Date}" Width="100"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</Window>

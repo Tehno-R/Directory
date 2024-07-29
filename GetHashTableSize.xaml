@@ -1,0 +1,12 @@
+﻿<Window x:Class="wpfApp.ModalWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="StartValue" Height="160" Width="200"
+        ResizeMode="NoResize" SizeToContent="Manual"
+        Closing="ModalWindow_OnClosing">
+    <Grid>
+        <TextBlock Text="Введите стартовое число ячеек хэш-таблицы" Height="50" TextWrapping="Wrap" VerticalAlignment="Top" Margin="10"/>
+        <TextBox Name="HtSize" Width="100" Height="20" VerticalAlignment="Center" />
+        <Button Content="Подтвердить" Width="100" Height="30" VerticalAlignment="Bottom" Margin="5" Background="LightGreen" Click="Submit_Click"/>
+    </Grid>
+</Window>
