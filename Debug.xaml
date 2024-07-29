@@ -13,7 +13,7 @@
         <ListView Grid.Row="0" Grid.Column="0" Name="DebugListView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10">
             <ListView.View >
                 <GridView>
-                    <GridViewColumn Header="Операция" DisplayMemberBinding="{Binding operation}" Width="80"/>
+                    <GridViewColumn Header="Операция" DisplayMemberBinding="{Binding Operation}" Width="80"/>
                     <GridViewColumn Header="Данные" DisplayMemberBinding="{Binding DataWith}" Width="450"/>
                     <GridViewColumn Header="Результат" DisplayMemberBinding="{Binding ResultOf}" Width="200"/>
                 </GridView>

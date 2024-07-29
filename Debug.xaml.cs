@@ -9,8 +9,12 @@ public partial class Debug
     public Debug(List<MainWindow.LogRecord> list)
     {
         InitializeComponent();
-        Records = new ObservableCollection<MainWindow.LogRecord>(list);
+        Records = new ObservableCollection<MainWindow.LogRecord>();
         DebugListView.ItemsSource = Records;
+        foreach (var rec in list)
+        {
+            Records.Add(rec);
+        }
     }
     
     

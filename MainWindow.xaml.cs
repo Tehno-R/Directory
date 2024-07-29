@@ -18,7 +18,6 @@ public partial class MainWindow
             Passport = passport;
             Fio = fio;
             LicensePlate = licensePlate;
-            string[] date_ = date.Split('.');
             Date = date;
         }
         public Record(Key key)
@@ -34,9 +33,17 @@ public partial class MainWindow
         public string LicensePlate { get; set; }
         public string Date { get; set; }
     }
-    public class LogRecord(LogRecord.Operation oper, string data, LogRecord.Result res, string message = "")
+    
+    public class LogRecord
     {
-        public enum Operation
+        public LogRecord(OperationType operationType, string data, Result res, string message = "")
+        {
+            Operation = operationType.ToString();
+            DataWith = data;
+            ResultOf = $"{res}{message}";
+        }
+
+        public enum OperationType
         {
             Add,
             Remove
@@ -47,254 +54,280 @@ public partial class MainWindow
             Unsuccessful
         }
 
-        public string operation { get; } = oper.ToString();
-        public string DataWith { get; } = data;
-        public string ResultOf { get; } = $"{res}{message ?? ""}";
+        public string Operation { get; }
+        public string DataWith { get; }
+        public string ResultOf { get; }
 
         public override string ToString()
         {
-            return $"{operation} || {DataWith} || {ResultOf}";
+            return $"{Operation} || {DataWith} || {ResultOf}";
         }
     }
 
-    private List<LogRecord> debugList = [];
-
-    private ObservableCollection<Record> Records { get; }
-    
-    public static RbTree Database { get; set; }
+    private readonly List<LogRecord> _debugList = [];
+    private ObservableCollection<Record> ObservCollect { get; }
+    public static RbTree Database { get; private set; } = null!; // не до конца уверен что так правильно делать
+    private string Here { get; }
     
     public MainWindow()
     {
         InitializeComponent();
         ModalWindow modalWindow = new ModalWindow(this);
         modalWindow.ShowDialog();
-        Records = new ObservableCollection<Record>();
-        RecordsListView.ItemsSource = Records;
+        ObservCollect = new ObservableCollection<Record>();
+        RecordsListView.ItemsSource = ObservCollect;
+        Here = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
     }
-    public void InitDatabase(int hashTableSize)
+    
+    /// <summary>
+    ///  Call only from modal window and create database instance
+    /// </summary>
+    /// <param name="hashTableSize">Integer value size of hashtable that would be use in database</param>
+    public static void InitDatabase(int hashTableSize)
     {
         Database = new RbTree(hashTableSize);
     }
-    private void ImportButton_Click(object sender, RoutedEventArgs e)
-    {
-        // Создание экземпляра OpenFileDialog
-        string here = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        OpenFileDialog openFileDialog = new OpenFileDialog
-        {
-            // Настройка фильтра для файлов (например, только текстовые файлы)
-            Filter = "Текстовые файлы (*.txt)|*.txt",
-            InitialDirectory = here
-        };
-
-        // Проверка, что пользователь выбрал файл
-        if (openFileDialog.ShowDialog() != true)
-        {
-            MessageBox.Show("Ошибка открытия диалогового окна");
-            return;
-        }
-        // Получение пути к выбранному файлу
-        string selectedFilePath = openFileDialog.FileName;
-
-        ImportFromFile(selectedFilePath);
-        RefreshList();
-        SaveLogs();
-    }
-    private void ImportFromFile(string selectedFilePath)
-    {
-        List<Key> allKeys = new List<Key>();
-        try
-        {
-            var lines = File.ReadAllLines(selectedFilePath);
-
-            foreach (var line in lines)
-            {
-                // Разделение строки на поля
-                var fields = line.Split(' ');
-
-                // Проверка корректности числа полей
-                if (fields.Length != 7)
-                {
-                    MessageBox.Show("Неверный формат строки: " + line);
-                    return;
-                }
-
-                // Извлечение и преобразование полей
-                var serie = fields[0];
-                var number = fields[1];
-                var surname = fields[2];
-                var name = fields[3];
-                var patronymic = fields[4];
-                var licensePlate = fields[5];
-                var date = fields[6];
-                if (!(Checker.IsValidPassport($"{serie} {number}") &&
-                      Checker.IsValidName(surname) && Checker.IsValidName(name) && Checker.IsValidName(patronymic) &&
-                      Checker.IsValidLicensePlate(licensePlate) &&
-                      Checker.IsValidDate(date)))
-                {
-                    MessageBox.Show("Неверный формат данных: " + line);
-                    return;
-                }
-                
-                Passport passport_ = new Passport($"{serie} {number}");
-                Fio fio_ = new Fio(surname, name,patronymic);
-                GosNum gosnum_ = new GosNum(licensePlate);
-                MyDate date_ = new MyDate(date);
-
-                Key key = new Key(passport_, fio_, gosnum_, date_);
-                
-                allKeys.Add(key);
-            }
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show("Ошибка при чтении файла");
-            return;
-        }
-
-        foreach (var key in allKeys)
-        {
-            bool added = Database.Insert(key);
-            debugList.Add(new LogRecord(LogRecord.Operation.Add, key.ToString(),
-                added ? LogRecord.Result.Successful:LogRecord.Result.Unsuccessful));
-        }
-
-    }
+    
     /// <summary>
-    /// Convert input from inputLines and convert to Key
+    /// Read input file and push in directory, otherwise show message about error
     /// </summary>
-    /// <returns>Key with param from inputLine or default key</returns>
-    private Key? ConvertToKey()
+    /// <param name="selectedFilePath">String input file path</param>
+    /// <returns>
+    /// LogRecord.Result.Successful if <c>all</c> data from file successful added in directory, otherwise
+    /// LogRecord.Result.Unsuccessful
+    /// </returns>
+    private LogRecord.Result ImportFromFile(string selectedFilePath)
     {
-        string pass = PassportTextBox.Text;
-        if (!Checker.IsValidPassport(pass))
+        List<Key> allKeys = [];
+
+        var lines = File.ReadAllLines(selectedFilePath);
+
+        // Извлечение данных из каждой строки
+        foreach (var line in lines)
         {
-            MessageBox.Show("Некорректные паспортные данные. Формат: 0000 000000");
-            return null;
+            // Разделение строки на поля
+            var fields = line.Split(' ');
+
+            // Проверка кол-ва элементов разделённых пробелом
+            if (fields.Length != 7)
+            {
+                MessageBox.Show("Неверный формат строки: " + line + "\nВозможнно где то стоит лишний " +
+                                "пробел или его наоборот не хватает");
+                return LogRecord.Result.Unsuccessful;
+            }
+
+            // Извлечение полей
+            var serie = fields[0];
+            var number = fields[1];
+            var surname = fields[2];
+            var name = fields[3];
+            var patronymic = fields[4];
+            var licensePlate = fields[5];
+            var date = fields[6];
+
+            // Проверка каждого поля на корректность
+            if (!Checker.IsValidPassport($"{serie} {number}"))
+            {
+                MessageBox.Show("Неверный формат серии и номера: " + line);
+                return LogRecord.Result.Unsuccessful;
+            }
+            if (!(Checker.IsValidName(surname) && Checker.IsValidName(name) && Checker.IsValidName(patronymic)))
+            {
+                MessageBox.Show("Неверный формат ФИО: " + line);
+                return LogRecord.Result.Unsuccessful;
+            }
+            if (!Checker.IsValidLicensePlate(licensePlate))
+            {
+                MessageBox.Show("Неверный формат гос.номера: " + line);
+                return LogRecord.Result.Unsuccessful;
+            }
+            if (!Checker.IsValidDate(date))
+            {
+                MessageBox.Show("Неверный формат даты: " + line);
+                return LogRecord.Result.Unsuccessful;
+            }
+            
+            Passport passport = new Passport($"{serie} {number}");
+            Fio fio = new Fio(surname, name, patronymic);
+            GosNum gosnum = new GosNum(licensePlate);
+            MyDate myDate = new MyDate(date);
+
+            allKeys.Add(new Key(passport, fio, gosnum, myDate));
         }
         
-        string fio = FioTextBox.Text;
-        string[] fioSep = fio.Split();
+        // Добавление данных в справочник
+        foreach (var key in allKeys)
+        {
+            Database.Insert(key);
+            _debugList.Add(new LogRecord(LogRecord.OperationType.Add, key.ToString(),
+                LogRecord.Result.Successful));
+        }
+
+        return LogRecord.Result.Successful;
+    }
+    
+    /// <summary>
+    /// Collect input from UI input fields and convert to Key
+    /// </summary>
+    /// <returns>Key with param from input fields or default key</returns>
+    private Tuple<Key, string> ConvertToKey()
+    {
+        string pass = PassportTextBox.Text;
+        string fioText = FioTextBox.Text;
+        string[] fioSep = fioText.Split();
+        string gosnumText = GosNumberTextBox.Text;
+        string dateText = DatePicker.Text;
+        
+        if (!Checker.IsValidPassport(pass))
+        {
+            MessageBox.Show("Некорректные паспортные данные");
+            return new Tuple<Key, string>(Key.DefaultKey, $"{pass} {fioText} {gosnumText} {dateText}");
+        }
+        
         if (!(fioSep.Length == 3 && 
               Checker.IsValidName(fioSep[0]) && Checker.IsValidName(fioSep[1]) && Checker.IsValidName(fioSep[2])))
         {
-            MessageBox.Show("Некорректное ФИО. Поле должно содержать 3 слова состоящие только буквы.");
-            return null;
+            MessageBox.Show("Некорректные ФИО");
+            return new Tuple<Key, string>(Key.DefaultKey, $"{pass} {fioText} {gosnumText} {dateText}");
         }
         
-        string gosnum = GosNumberTextBox.Text;
-        if (!Checker.IsValidLicensePlate(gosnum))
+        if (!Checker.IsValidLicensePlate(gosnumText))
         {
-            MessageBox.Show("Некорректный гос.номер. Поле должно соответствовать формату A123BC");
-            return null;
+            MessageBox.Show("Некорректный гос.номер");
+            return new Tuple<Key, string>(Key.DefaultKey, $"{pass} {fioText} {gosnumText} {dateText}");
         }
         
-        string date = DatePicker.Text;
-        if (!Checker.IsValidDate(date))
+        if (!Checker.IsValidDate(dateText))
         {
-            MessageBox.Show("Некорректная дата. " +
-                            "Поле должно содержать 3 числа разделённых через точку состоящие только цифр.");
-            return null;
+            MessageBox.Show("Некорректная дата");
+            return new Tuple<Key, string>(Key.DefaultKey, $"{pass} {fioText} {gosnumText} {dateText}");
         }
         
-        Passport passport_ = new Passport(pass);
-        Fio fio_ = new Fio(fioSep[0], fioSep[1],fioSep[2]);
-        GosNum gosnum_ = new GosNum(gosnum);
-        MyDate date_ = new MyDate(date);
+        Passport passport = new Passport(pass);
+        Fio fio = new Fio(fioSep[0], fioSep[1],fioSep[2]);
+        GosNum gosnum = new GosNum(gosnumText);
+        MyDate date = new MyDate(dateText);
         
-        Key key = new Key(passport_, fio_, gosnum_, date_);
-        return key;
+        return new Tuple<Key, string>(new Key(passport, fio, gosnum, date), "");
     }
+    
     private void AddButton_Click(object sender, RoutedEventArgs e)
     {
-        Key? key = ConvertToKey();
-        if (key == null) return;
-        bool added = Database.Insert(key);
-        debugList.Add(new LogRecord(LogRecord.Operation.Add, key.ToString(),
+        Tuple<Key,string> key = ConvertToKey();
+        if (key.Item1 == Key.DefaultKey)
+        {
+            _debugList.Add(new LogRecord(LogRecord.OperationType.Add, key.Item2,
+                LogRecord.Result.Unsuccessful));
+            return;
+        }
+        bool added = Database.Insert(key.Item1);
+        _debugList.Add(new LogRecord(LogRecord.OperationType.Add, key.ToString(),
             added ? LogRecord.Result.Successful:LogRecord.Result.Unsuccessful));
-        RefreshList();
+        if (added) RefreshList();
         SaveLogs();
     }
     private void DeleteButton_Click(object sender, RoutedEventArgs e)
     {
-        Key? key = ConvertToKey();
-        if (key == null) return;
-        bool deleted = false;
-        deleted = Database.Delete(key);
-        debugList.Add(new LogRecord(LogRecord.Operation.Remove, key.ToString(),
+        Tuple<Key,string> key = ConvertToKey();
+        if (key.Item1 == Key.DefaultKey)
+        {
+            _debugList.Add(new LogRecord(LogRecord.OperationType.Remove, key.Item2,
+                LogRecord.Result.Unsuccessful));
+            return;
+        }
+        bool deleted = Database.Delete(key.Item1);
+        _debugList.Add(new LogRecord(LogRecord.OperationType.Remove, key.Item1.ToString(),
             deleted ? LogRecord.Result.Successful:LogRecord.Result.Unsuccessful));
-        RefreshList();
+        if (deleted) RefreshList();
         SaveLogs();
     }
     private void SearchButton_Click(object sender, RoutedEventArgs e)
     {
-        Key? key = ConvertToKey();
-        if (key == null) return;
+        Tuple<Key,string> key = ConvertToKey();
+        if (key.Item1 == Key.DefaultKey) return;
         string date1 = DateFrom.Text;
         string date2 = DateTo.Text;
         if (!(Checker.IsValidDate(date1) && Checker.IsValidDate(date2))) return;
-        Key key1 = new Key(key.Passport, key.Fio, key.GosNum, new MyDate(date1));
-        Key key2 = new Key(key.Passport, key.Fio, key.GosNum, new MyDate(date2));
+        Key key1 = new Key(key.Item1.Passport, key.Item1.Fio, key.Item1.GosNum, new MyDate(date1));
+        Key key2 = new Key(key.Item1.Passport, key.Item1.Fio, key.Item1.GosNum, new MyDate(date2));
         List<Key> results = Database.Find(key1, key2);
-        List<Record> records = new List<Record>();
+        List<Record> records = [];
         foreach (var res in results)
         {
-            if (res != null) records.Add(new Record(res));
+            records.Add(new Record(res));
         }
 
         SearchRes window = new SearchRes(records);
         window.Show();
     }
+    private void ImportButton_Click(object sender, RoutedEventArgs e)
+    {
+        // Создание экземпляра OpenFileDialog
+        OpenFileDialog openFileDialog = new OpenFileDialog
+        {
+            // Настройка фильтра для файлов
+            Filter = "Текстовые файлы (*.txt)|*.txt",
+            InitialDirectory = Here
+        };
+        openFileDialog.ShowDialog();
+        
+        // Проверка, что пользователь выбрал файл
+        if (openFileDialog.FileName == "") return;
+        
+        // Получение пути к выбранному файлу
+        string selectedFilePath = openFileDialog.FileName;
+
+        LogRecord.Result result = ImportFromFile(selectedFilePath);
+        if (result == LogRecord.Result.Successful)
+        {
+            RefreshList();
+            SaveLogs();            
+        }
+    }
     private void ExportButton_Click(object sender, RoutedEventArgs e)
     {
-        // Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        string here = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-
         SaveFileDialog saveFileDialog = new SaveFileDialog();
         saveFileDialog.Filter = "Text files (*.txt)|*.txt";
-        saveFileDialog.InitialDirectory = here;
+        saveFileDialog.InitialDirectory = Here;
         saveFileDialog.Title = "Save your file";
 
         // Отображение диалогового окна и обработка результата
-        if (saveFileDialog.ShowDialog() == true)
+        saveFileDialog.ShowDialog();
+        if (saveFileDialog.FileName == "") return;
+
+        string filePath = saveFileDialog.FileName;
+        List<Key> keys = Database.GetAllKeys();
+        string dataToSave = "";
+        foreach (var key in keys)
         {
-            string filePath = saveFileDialog.FileName;
-            // Пример данных для записи в файл
-            List<Key> keys = Database.GetAllKeys();
-            string dataToSave = "";
-            foreach (var key in keys)
-            {
-                dataToSave += key.ToString() + '\n';
-            }
-            File.WriteAllText(filePath, dataToSave);
+            dataToSave += key.ToString() + '\n';
         }
-        
+        File.WriteAllText(filePath, dataToSave);
     }
-    private void DebugButton_Click(object sender, RoutedEventArgs e)
+    private void DebugButton_Click(object sender, RoutedEventArgs e) 
     {
-        Debug window = new Debug(debugList);
-        // window.Show();
+        Debug window = new Debug(_debugList);
+        window.Show();
     }
     private void AlternateViewButton_Click(object sender, RoutedEventArgs e)
     {
-        var window = new AlterView();
-        if (window != null) window.Show();
+        AlterView window = new AlterView();
+        window.Show();
     }
     private void RefreshList()
     {
         List<Key> keys = Database.GetAllKeys();
 
-        Records.Clear();
+        ObservCollect.Clear();
         foreach (var key in keys)
         {
-            Records.Add(new Record(key.Passport.ToString(), key.Fio.ToString(), key.GosNum.ToString(), 
-                key.Date.ToString()));
+            ObservCollect.Add(new Record(key));
         }
     }
     private void ListView_SelectionChanged(object sender, SelectionChangedEventArgs selectionChangedEventArgs)
     {
         Record data = (Record)RecordsListView.SelectedItem;
         if (data == null) return;
-        
         PassportTextBox.Text = data.Passport;
         FioTextBox.Text = data.Fio;
         GosNumberTextBox.Text = data.LicensePlate;
@@ -302,12 +335,11 @@ public partial class MainWindow
     }
     void SaveLogs()
     {
-        string here = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\Logs.txt";
         string dataToSave = "";
-        foreach (var log in debugList)
+        foreach (var log in _debugList)
         {
             dataToSave += log.ToString() + '\n';
         }
-        File.WriteAllText(here, dataToSave);
+        File.WriteAllText(Here + "\\Logs.txt", dataToSave);
     }
 }

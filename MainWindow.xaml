@@ -22,7 +22,7 @@
 
         <!-- Элемент управления для отображения данных -->
         <ListView Grid.Row="0" Grid.Column="0" Name="RecordsListView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10" SelectionChanged="ListView_SelectionChanged">
-            <ListView.View >
+            <ListView.View>
                 <GridView>
                     <GridViewColumn Header="Паспорт" DisplayMemberBinding="{Binding Passport}" Width="80"/>
                     <GridViewColumn Header="Фамилия" DisplayMemberBinding="{Binding Fio}" Width="310"/>
@@ -53,7 +53,7 @@
 
         <!-- Нижняя панель кнопок -->
         <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Margin="10">
-            <!-- <Button Content="Отладка" Width="100" Margin="5" Click="DebugButton_Click"/> -->
+            <Button Content="Отладка" Width="100" Margin="5" Click="DebugButton_Click"/>
             <Button Content="Альтернативный вид" Width="150" Margin="5" Click="AlternateViewButton_Click"/>
             <Button Content="Импорт" Width="100" Margin="5" Click="ImportButton_Click"/>
             <Button Content="Экспорт" Width="100" Margin="5" Click="ExportButton_Click"/>

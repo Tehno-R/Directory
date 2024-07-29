@@ -520,7 +520,7 @@ public class RbTree
 
     public List<Key> GetAllKeys()
     {
-        List<Key> keys = new List<Key>();
+        List<Key> keys = [];
         
         List<HashTable.HashTable> hashTables = InOrderTraversal();
         foreach (var hashTable in hashTables)

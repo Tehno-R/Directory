@@ -5,12 +5,12 @@ namespace wpfApp;
 
 public partial class ModalWindow
 {
-    private MainWindow MainWindow;
-    private bool flag = false;
+    private readonly MainWindow _mainWindow;
+    private bool _flag;
     public ModalWindow(MainWindow window)
     {
         InitializeComponent();
-        MainWindow = window;
+        _mainWindow = window;
     }
     void Submit_Click(object sender, RoutedEventArgs routedEventArgs)
     {
@@ -27,7 +27,7 @@ public partial class ModalWindow
 
         if (size is >= 10 and <= 100)
         {
-            flag = true;
+            _flag = true;
             MainWindow.InitDatabase(size);
             Close();
         }
@@ -36,6 +36,6 @@ public partial class ModalWindow
 
     private void ModalWindow_OnClosing(object? sender, CancelEventArgs e)
     {
-        if (!flag) MainWindow.Close();
+        if (!_flag) _mainWindow.Close();
     }
 }

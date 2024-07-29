@@ -9,11 +9,6 @@ public readonly struct Passport : IComparer<Passport>, IComparable<Passport>
         Serie = int.Parse(passSplit[0]);
         Number = int.Parse(passSplit[1]);
     }
-    // public Passport(int serie, int number)
-    // {
-    //     Serie = serie;
-    //     Number = number;
-    // }
 
     private int Serie { get; }
     private int Number { get; }
@@ -71,11 +66,18 @@ public readonly struct Passport : IComparer<Passport>, IComparable<Passport>
         return sum;
     }
 }
-public readonly struct Fio(string f, string i, string o) : IComparer<Fio>, IComparable<Fio>
+public readonly struct Fio : IComparer<Fio>, IComparable<Fio>
 {
-    private string Surname { get; } = f;
-    private string Name { get; } = i;
-    private string Patronymic { get; } = o;
+    public Fio(string f = "", string i = "", string o = "")
+    {
+        Surname = f;
+        Name = i;
+        Patronymic = o;
+    }
+
+    private string Surname { get; }
+    private string Name { get; }
+    private string Patronymic { get; }
 
     public override string ToString()
     {
@@ -100,10 +102,16 @@ public readonly struct Fio(string f, string i, string o) : IComparer<Fio>, IComp
         return string.Compare(Patronymic, other.Patronymic, StringComparison.Ordinal);
     }
 }
-public readonly struct GosNum(string gosNum)
+public readonly struct GosNum
 {
-    private string StrVal { get; } = $"{gosNum[0]}{gosNum[4]}{gosNum[5]}";
-    private int NumVal { get; } = int.Parse($"{gosNum[1]}{gosNum[2]}{gosNum[3]}");
+    public GosNum(string gosNum)
+    {
+        StrVal = $"{gosNum[0]}{gosNum[4]}{gosNum[5]}";
+        NumVal = int.Parse($"{gosNum[1]}{gosNum[2]}{gosNum[3]}");
+    }
+
+    private string StrVal { get; }
+    private int NumVal { get; }
 
     public override string ToString()
     {
@@ -151,12 +159,29 @@ public readonly struct MyDate : IComparer<MyDate>, IComparable<MyDate>
         return Day.CompareTo(other.Day);
     }
 }
-public class Key(Passport pass = default, Fio fio = default, GosNum gn = default, MyDate date = default) : IComparable<Key>
+public class Key : IComparable<Key>
 {
-    public Passport Passport { get; } = pass;
-    public Fio Fio { get; } = fio;
-    public GosNum GosNum { get; } = gn;
-    public MyDate Date { get; } = date;
+    public static Key DefaultKey { get; } = new Key();
+    
+    public Key()
+    {
+        Passport = new Passport();
+        Fio = new Fio("Ivanov", "Ivan", "Ivanovich");
+        GosNum = new GosNum("A000AA");
+        Date = new MyDate();
+    }
+    public Key(Passport pass, Fio fio, GosNum gn, MyDate date)
+    {
+        Passport = pass;
+        Fio = fio;
+        GosNum = gn;
+        Date = date;
+    }
+
+    public Passport Passport { get; }
+    public Fio Fio { get; }
+    public GosNum GosNum { get; }
+    public MyDate Date { get; }
 
     public override string ToString()
     {
